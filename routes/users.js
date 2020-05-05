@@ -21,24 +21,45 @@ router.get('/', authenticateUser,asyncHandler( async( req, res ) => {
 
 // validation for user
 const userValidation = [
+    // validate that firstName is not empty or null
     check('firstName')
         .exists({
             checkNull: true,
             checkFalsy: true
         })
         .withMessage('Please provide a value for "firstName"'),
+    // validate that lastName is not empty or null
     check('lastName')
         .exists({
             checkNull: true,
             checkFalsy: true
         })
         .withMessage('Please provide a value for "lastName"'),
+        // validate that emailAddress is not empty or null
     check('emailAddress')
         .exists({
             checkNull: true,
             checkFalsy: true
         })
-        .withMessage('Please provide a value for "emailAddress"'),
+        .withMessage('Please provide a value for "emailAddress"')
+        // validate that emailAddress is a valid email address format
+        .isEmail()
+        .withMessage('Please enter a valid Email Address')
+        // validate that emailAddress is unique
+        .custom( async(value) => {
+            console.log(value)
+            const emailExist = await User.findOne({
+                where: {
+                    emailAddress: value
+                }
+            });
+           
+            if(emailExist) {
+                throw new Error('Email already exists. Please enter a unique Email');
+            }
+        })
+        .withMessage('Please enter a unique Email Address'),
+        // validate that password is not empty or null
     check('password')
         .exists({
             checkNull: true,
@@ -68,12 +89,10 @@ router.post('/', userValidation, asyncHandler( async( req, res ) => {
         newUser.password = bcryptjs.hashSync(newUser.password);
 
         // create new user in database
-        console.log('creating user...')
         user = await User.create(newUser);
-        console.log('successfully added')
 
         // set location header to "/" (currently directory in the users route)
-        res.location('../');
+        res.location('/');
 
         // Send 201 status and end the response
         res.status(201).end();
