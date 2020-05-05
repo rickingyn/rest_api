@@ -17,10 +17,10 @@ module.exports = ( sequelize ) => {
             allowNull: false,
             validate: {
                 notNull: {
-                    msg: 'Please enter a first name'
+                    msg: 'Please provide a value for "firstName"'
                 },
                 notEmpty: {
-                    msg: 'Please enter a first name'
+                    msg: 'Please provide a value for "firstName"'
                 }
             }
         }, 
@@ -29,11 +29,11 @@ module.exports = ( sequelize ) => {
             allowNull: false,
             validate: {
                 notNull: {
-                    msg: 'Pleae enter a last name'
+                    msg: 'Please provide a value for "lastName"'
                 },
                 notEmpty: {
-                    msg: 'Please enter a last name'
-                },
+                    msg: 'Please provide a value for "lastName"'
+                }
             }
         },
         emailAddress: {
@@ -41,10 +41,10 @@ module.exports = ( sequelize ) => {
             allowNull: false,
             validate: {
                 notNull: {
-                    msg: 'Please enter an email address'
+                    msg: 'Please provide a value for "emailAddress"'
                 },
                 notEmpty: {
-                    msg: 'Please enter an email address'
+                    msg: 'Please provide a value for "emailAddress"'
                 }
             },
         },
@@ -53,10 +53,10 @@ module.exports = ( sequelize ) => {
             allowNull: false,
             validate: {
                 notNull: {
-                    msg: 'Please enter a password'
+                    msg: 'Please provide a value for "password"'
                 },
                 notEmpty: {
-                    msg: 'Please enter a password'
+                    msg: 'Please provide a value for "password"'
                 }
             }
         }
