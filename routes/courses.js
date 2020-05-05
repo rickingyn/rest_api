@@ -11,8 +11,10 @@ const { Course, User } = require('../models');// require Course and User models
 // courses GET route: returns a list of courses
 router.get('/', asyncHandler( async( req, res ) => {
     // find all courses and returns json
+        // filter out createdAt and updatedAt fields
         // use Sequelize's include query option to return associated user
     const courses = await Course.findAll({
+        attributes: ['id', 'title', 'description', 'estimatedTime', 'materialsNeeded', 'userId'],
         include: [
             {
                 model: User,
@@ -28,7 +30,10 @@ router.get('/:id', asyncHandler( async( req, res ) => {
     const courseId = req.params.id;
 
     // use Sequelize's include query option to return associated user
+        // filter out createdAt and updatedAt fields
+        // use Sequelize's include query option to return associated user
     const course = await Course.findByPk(courseId, {
+        attributes: ['id', 'title', 'description', 'estimatedTime', 'materialsNeeded', 'userId'],
         include: [
             {
                 model: User,

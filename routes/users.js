@@ -10,13 +10,16 @@ const { User } = require('../models'); // require User Model
 
 // users GET route: return all users
 router.get('/', authenticateUser,asyncHandler( async( req, res ) => {
-    // retreive user's information from the request object's currentUser property
-    const user = req.currentUser;
+    
+    // find user with current User from request object's currentUser property
+    const user = await User.findOne({
+        attributes: ['id', 'firstName', 'lastName', 'emailAddress'],
+        where: {
+            emailAddress: req.currentUser.emailAddress
+        }
+    });
 
-    res.json({ 
-        name: `${user.firstName} ${user.lastName}`,
-        username: user.emailAddress
-     });
+    res.json({ user });
 } ));
 
 // validation for user
@@ -47,7 +50,6 @@ const userValidation = [
         .withMessage('Please enter a valid Email Address')
         // validate that emailAddress is unique
         .custom( async(value) => {
-            console.log(value)
             const emailExist = await User.findOne({
                 where: {
                     emailAddress: value
