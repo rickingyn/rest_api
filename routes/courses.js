@@ -104,17 +104,38 @@ router.put('/:id', authenticateUser, asyncHandler( async( req, res ) => {
         // find course with id in params
         const courseId = req.params.id;
         const updatedCourse = req.body;
-        const course = await Course.findByPk(courseId);
+        const course = await Course.findOne({
+            where: {
+                id: courseId
+            }, 
+            include: [
+                {
+                    model: User,
+                    as: 'user'
+                }
+            ]
+        });
         
-        // update if course is found
-        // send 204 status and end response
-        if(course) {
-            await course.update(updatedCourse);
-            res.status(204).end();
+        // assigned users email to variable; only allow update if current user is the owner of the course
+        const currentUser = req.currentUser.emailAddress;
+        const courseOwner = course.user.emailAddress;
+
+        if(currentUser === courseOwner) {
+            // update if course is found
+            // send 204 status and end response
+            if(course) {
+                await course.update(updatedCourse);
+                res.status(204).end();
+            } else {
+                // send 404 status and return 'Course not found' message
+                res.status(404).json({ message: 'Course not found' });
+            }    
         } else {
-            // send 404 status and return 'Course not found' message
-            res.status(404).json({ message: 'Course not found' });
+            // if current user is not the owner for the book, send 403 status code
+            res.status(403).json({ error: 'You do not own the requested course'});
         }
+
+        
     } catch(error) {
         // send 400 status and return sequelize's validation error
         if(error.name === 'SequelizeValidationError') {
@@ -128,17 +149,34 @@ router.put('/:id', authenticateUser, asyncHandler( async( req, res ) => {
 // course DELETE route: delete a course
 router.delete('/:id', authenticateUser, asyncHandler( async( req, res ) => {
     const courseId = req.params.id;
-    const course = await Course.findByPk(courseId);
+    const course = await Course.findByPk(courseId, {
+        include: [
+            {
+                model: User,
+                as: 'user'
+            }
+        ]
+    });
 
-    // update if course is found
-    // send 204 status and end response
-    if(course) {
-        await course.destroy();
-        res.status(204).end();
+    // validate that the current user is the owner of the course
+    const currentUser = req.currentUser.emailAddress;
+    const courseOwner = course.user.emailAddress;
+    
+    if(currentUser === courseOwner) {
+        // update if course is found
+        // send 204 status and end response
+        if(course) {
+            await course.destroy();
+            res.status(204).end();
+        } else {
+            // send 404 status and return 'Course not found' message
+            res.status(404).json({ message: 'Course not found' });
+        }
     } else {
-        // send 404 status and return 'Course not found' message
-        res.status(404).json({ message: 'Course not found' });
+        // if current user is not the owner for the book, send 403 status code
+        res.status(403).json({ error: 'You do not own the requested course'});
     }
+
 } ));
 
 
