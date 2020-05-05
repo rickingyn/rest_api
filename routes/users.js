@@ -2,6 +2,8 @@ const express = require('express');
 const router = express();
 // import bcryptjs module  to hash passwords
 const bcryptjs = require('bcryptjs');
+// import authentication module
+const auth = require('basic-auth');
 // require methods from express-validator module
 const { check, validationResult } = require('express-validator');
 // require User Model
@@ -18,10 +20,53 @@ function asyncHandler(cb) {
     }
 }
 
+// Authentication Middleware
+async function authenticateUser( req, res, next ) {
+    // parse the user's credentials from the Authorization header
+    const credentials = auth(req);
+    let message = null;
+
+    // if user's credential is available, retrieve user
+    if(credentials) {
+        const users = await User.findAll();
+        const user = users.find( u => u.emailAddress === credentials.name );
+
+        // if user was retreived, use bcryptjs to verify the user's password
+        if(user) {
+            const authenticated = bcryptjs
+                .compareSync(credentials.pass, user.password);
+            
+            // if password matches
+            if(authenticated) {
+                console.log(`Authentication successful for username: ${ user.emailAddress }`);
+                req.currentUser = user;
+            } else {
+                message = `Authentication failure for username: ${ user.emailAddress }`;
+            } 
+        } else {
+            message = `User not found for username: ${ credentials.name }`; 
+        }
+    } else {
+        message = 'Auth header not found';
+    }
+
+    if(message) {
+        console.warn(message);
+        res.status(401).json({ message: 'Access Denied'});
+    } else {
+        next();
+    } 
+};
+
 // users GET route: return all users
-router.get('/', asyncHandler( async( req, res ) => {
+router.get('/', authenticateUser,asyncHandler( async( req, res ) => {
+    const user = req.currentUser;
+
     const users = await User.findAll();
-    res.json({ users });
+    res.json({ 
+        name: `${user.firstName} ${user.lastName}`,
+        username: user.emailAddress
+     });
 } ));
 
 // validation for user
@@ -73,7 +118,9 @@ router.post('/', userValidation, asyncHandler( async( req, res ) => {
         newUser.password = bcryptjs.hashSync(newUser.password);
 
         // create new user in database
+        console.log('creating user...')
         user = await User.create(newUser);
+        console.log('successfully added')
 
         // set location header to "/" (currently directory in the users route)
         res.location('../');
