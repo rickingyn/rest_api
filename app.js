@@ -3,6 +3,7 @@
 // load modules
 const express = require('express');
 const morgan = require('morgan');
+const { sequelize } = require('./models');
 
 // variable to enable global error logging
 const enableGlobalErrorLogging = process.env.ENABLE_GLOBAL_ERROR_LOGGING === 'true';
@@ -21,6 +22,20 @@ app.get('/', (req, res) => {
     message: 'Welcome to the REST API project!',
   });
 });
+
+// Test connectiion to the database
+( async () => {
+  try {
+    await sequelize.authenticate();
+    console.log('Connection to the database successful!');
+
+    // Sync the models
+    console.log('Synchronizing the models with the database...');
+    await sequelize.sync({ force: true }); // force the database to be dropped and re-created everytime    
+  } catch(error) {
+    console.error("Connection to the database failed: ", error);
+  }
+}) ();
 
 // send 404 if no other route matched
 app.use((req, res) => {
