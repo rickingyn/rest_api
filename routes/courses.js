@@ -1,20 +1,12 @@
 const express = require('express');
 const router = express();
-// require check() and validationResult() methods from express-validator module
-const { check, validationResult } = require('express-validator');
-// require Course and User models
-const { Course, User } = require('../models');
+const { check, validationResult } = require('express-validator');// require check() and validationResult() methods from express-validator module
+// require custom middlewares
+const authenticateUser = require('../middleware/Authentication.js');
+const asyncHandler = require('../middleware/AsynchHandler.js');
 
-// Handler function to wrap each route
-function asyncHandler(cb) {
-    return async( req, res, next ) => {
-        try {
-            await cb( req, res, next )
-        } catch(error) {
-            res.status(500).send(error);
-        }
-    }
-}
+const { Course, User } = require('../models');// require Course and User models
+
 
 // courses GET route: returns a list of courses
 router.get('/', asyncHandler( async( req, res ) => {
@@ -66,7 +58,7 @@ const courseValidation = [
     ];
 
 // course POST route: create a course
-router.post('/', courseValidation, asyncHandler( async( req, res) => {
+router.post('/', courseValidation, authenticateUser, asyncHandler( async( req, res) => {
     // attempt to get the validation result from the request object
     const errors = validationResult(req);
 
@@ -101,7 +93,7 @@ router.post('/', courseValidation, asyncHandler( async( req, res) => {
 } ));
 
 // course PUT route: update a course
-router.put('/:id', asyncHandler( async( req, res ) => {
+router.put('/:id', authenticateUser, asyncHandler( async( req, res ) => {
     // try/catch block to catch Sequlize's validation error
     try {
         // find course with id in params
@@ -129,7 +121,7 @@ router.put('/:id', asyncHandler( async( req, res ) => {
 } ));
 
 // course DELETE route: delete a course
-router.delete('/:id', asyncHandler( async( req, res ) => {
+router.delete('/:id', authenticateUser, asyncHandler( async( req, res ) => {
     const courseId = req.params.id;
     const course = await Course.findByPk(courseId);
 

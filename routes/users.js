@@ -1,68 +1,18 @@
 const express = require('express');
 const router = express();
-// import bcryptjs module  to hash passwords
-const bcryptjs = require('bcryptjs');
-// import authentication module
-const auth = require('basic-auth');
-// require methods from express-validator module
-const { check, validationResult } = require('express-validator');
-// require User Model
-const { User } = require('../models');
+const bcryptjs = require('bcryptjs'); // import bcryptjs module  to hash passwords
+const { check, validationResult } = require('express-validator'); // require methods from express-validator module
+// require custom middlewares
+const authenticateUser = require('../middleware/Authentication.js');
+const asyncHandler = require('../middleware/AsynchHandler.js');
 
-// Handler function to wrap each route
-function asyncHandler(cb) {
-    return async( req, res, next ) => {
-        try {
-            await cb( req, res, next )
-        } catch(error) {
-            res.status(500).send(error);
-        }
-    }
-}
-
-// Authentication Middleware
-async function authenticateUser( req, res, next ) {
-    // parse the user's credentials from the Authorization header
-    const credentials = auth(req);
-    let message = null;
-
-    // if user's credential is available, retrieve user
-    if(credentials) {
-        const users = await User.findAll();
-        const user = users.find( u => u.emailAddress === credentials.name );
-
-        // if user was retreived, use bcryptjs to verify the user's password
-        if(user) {
-            const authenticated = bcryptjs
-                .compareSync(credentials.pass, user.password);
-            
-            // if password matches
-            if(authenticated) {
-                console.log(`Authentication successful for username: ${ user.emailAddress }`);
-                req.currentUser = user;
-            } else {
-                message = `Authentication failure for username: ${ user.emailAddress }`;
-            } 
-        } else {
-            message = `User not found for username: ${ credentials.name }`; 
-        }
-    } else {
-        message = 'Auth header not found';
-    }
-
-    if(message) {
-        console.warn(message);
-        res.status(401).json({ message: 'Access Denied'});
-    } else {
-        next();
-    } 
-};
+const { User } = require('../models'); // require User Model
 
 // users GET route: return all users
 router.get('/', authenticateUser,asyncHandler( async( req, res ) => {
+    // retreive user's information from the request object's currentUser property
     const user = req.currentUser;
 
-    const users = await User.findAll();
     res.json({ 
         name: `${user.firstName} ${user.lastName}`,
         username: user.emailAddress
