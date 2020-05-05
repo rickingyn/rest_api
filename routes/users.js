@@ -1,5 +1,7 @@
 const express = require('express');
 const router = express();
+// import bcryptjs module  to hash passwords
+const bcryptjs = require('bcryptjs');
 // require methods from express-validator module
 const { check, validationResult } = require('express-validator');
 // require User Model
@@ -66,6 +68,9 @@ router.post('/', userValidation, asyncHandler( async( req, res ) => {
             const errorMessages = errors.array().map( error => error.msg );
             return res.status(400).json({ errors: errorMessages });
         }
+
+        // Hash password
+        newUser.password = bcryptjs.hashSync(newUser.password);
 
         // create new user in database
         user = await User.create(newUser);
