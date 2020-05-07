@@ -6,6 +6,7 @@ module.exports = ( sequelize ) => {
     class Course extends Sequelize.Model { }
 
     // initalize model fields
+    // set validations; do not allow empty or n ull
     Course.init({
         id: {
             type: Sequelize.INTEGER,
